@@ -31,21 +31,13 @@ export default function IslandDetail() {
           <div className="card">
             <div className="section-title">Island Status</div>
             {(() => {
-              const html = DOMPurify.sanitize(marked.parse(data.summary || '', { async: false }) as string);
+              const md = (data.summary || '').replace(/盛り上がり状況/g, '状況');
+              const html = DOMPurify.sanitize(marked.parse(md, { async: false }) as string);
               return <div className="prose prose-invert text-sm leading-relaxed break-anywhere" dangerouslySetInnerHTML={{ __html: html }} />;
             })()}
           </div>
 
-          {data.highlights && data.highlights.length > 0 && (
-            <div className="card">
-              <div className="section-title">Highlights</div>
-              <ul className="list-disc pl-6 text-sm">
-                {data.highlights.map((h, i) => (
-                  <li key={i} className="break-anywhere">{h}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {/* Highlights removed as it overlaps with Island Status content */}
 
           {data.sources && data.sources.length > 0 && (
             <div className="card">
