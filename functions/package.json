@@ -1,0 +1,28 @@
+{
+  "name": "fortnite-island-ranking-functions",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "node --env-file=.env --watch ./lib/dev-server.cjs",
+    "clean": "rimraf lib"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^13.4.0",
+    "firebase-functions": "^6.4.0",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.5.4"
+  }
+}

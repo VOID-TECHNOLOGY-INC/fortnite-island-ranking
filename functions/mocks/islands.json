@@ -1,0 +1,51 @@
+{
+  "items": [
+    {
+      "code": "1234-5678-9012",
+      "name": "Battle Box Alpha",
+      "creator": "SampleStudio",
+      "tags": ["Action", "Team"],
+      "metrics": {
+        "uniquePlayers": 125000,
+        "peakCCU": 8200,
+        "minutesPerPlayer": 18.4,
+        "retentionD1": 0.32,
+        "retentionD7": 0.12,
+        "recommends": 4200,
+        "favorites": 9800
+      }
+    },
+    {
+      "code": "9999-8888-7777",
+      "name": "Parkour Rush",
+      "creator": "JumpWorks",
+      "tags": ["Parkour", "Casual"],
+      "metrics": {
+        "uniquePlayers": 86000,
+        "peakCCU": 5100,
+        "minutesPerPlayer": 22.1,
+        "retentionD1": 0.41,
+        "retentionD7": 0.17,
+        "recommends": 5100,
+        "favorites": 15000
+      }
+    },
+    {
+      "code": "2468-1357-2468",
+      "name": "Zombie Survival Arena",
+      "creator": "CoopLab",
+      "tags": ["Co-op", "PvE"],
+      "metrics": {
+        "uniquePlayers": 56000,
+        "peakCCU": 2700,
+        "minutesPerPlayer": 27.5,
+        "retentionD1": 0.38,
+        "retentionD7": 0.16,
+        "recommends": 2100,
+        "favorites": 7200
+      }
+    }
+  ]
+}
+
+

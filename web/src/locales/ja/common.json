@@ -1,0 +1,12 @@
+{
+  "nav": { "home": "ホーム", "compare": "比較" },
+  "footer": { "note": "非公式ダッシュボード（Fortnite Data API/公開7日分を使用）" },
+  "actions": { "refresh": "再読込", "search": "検索", "addCompare": "比較に追加" },
+  "filters": { "window": "時間窓", "sort": "並び替え", "category": "カテゴリ", "query": "島名またはコード" },
+  "windows": { "10m": "10分", "1h": "1時間", "24h": "24時間" },
+  "sort": { "hype": "HypeScore", "unique": "ユニーク", "peak": "同接ピーク", "d1": "翌日定着" },
+  "kpi": { "hype": "HypeScore", "unique": "ユニーク", "peak": "同接ピーク", "mpp": "分/人", "d1": "D1", "d7": "D7" },
+  "home": { "title": "トップ島", "surge": "急上昇" },
+  "detail": { "metrics": "指標", "retention": "リテンション", "favorites": "お気に入り", "reコメンド": "推奨" }
+}
+
