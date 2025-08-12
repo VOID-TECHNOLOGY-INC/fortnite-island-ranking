@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import { useTranslation } from 'react-i18next';
 import { fetchIslandResearch, type Research } from '../lib/api';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 export default function IslandDetail() {
   const { code } = useParams();
@@ -12,41 +14,44 @@ export default function IslandDetail() {
   const { data, isLoading, error } = useSWR<Research>(['research', code, name, lang], () => fetchIslandResearch(code!, name, lang));
 
   return (
-    <div>
-      <div className="toolbar">
-        <h2 style={{ margin: 0 }}>{name ? `${name} (${code})` : code}</h2>
-        <div style={{ flex: 1 }} />
-      </div>
-      {isLoading && <div>Loading...</div>}
-      {error && <div className="text-red-500">Error: {String((error as any)?.message || error)}</div>}
-      {data && (
-        <div className="space-y-4">
-          <section>
-            <h3 className="font-semibold mb-2">Overview</h3>
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">{data.summary}</div>
-          </section>
-          {data.highlights && data.highlights.length > 0 && (
-            <section>
-              <h3 className="font-semibold mb-2">Highlights</h3>
-              <ul className="list-disc pl-6 text-sm">
-                {data.highlights.map((h, i) => (
-                  <li key={i}>{h}</li>
-                ))}
-              </ul>
-            </section>
-          )}
-          {data.sources && data.sources.length > 0 && (
-            <section>
-              <h3 className="font-semibold mb-2">Sources</h3>
-              <ul className="list-disc pl-6 text-sm break-all">
-                {data.sources.map((s, i) => (
-                  <li key={i}><a href={s.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{s.title || s.url}</a></li>
-                ))}
-              </ul>
-            </section>
-          )}
-          <div className="text-xs text-gray-400">Updated at: {new Date(data.updatedAt).toLocaleString()}</div>
+    <div className="space-y-4">
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title break-anywhere">{name || code}</h2>
+          <span className="badge">{code}</span>
         </div>
+        <div className="muted" style={{ marginTop: 6 }}>Auto research powered by Perplexity</div>
+      </div>
+
+      {isLoading && <div className="card">Loading...</div>}
+      {error && <div className="card text-red-500">Error: {String((error as any)?.message || error)}</div>}
+
+      {data && (
+        <>
+          <div className="card">
+            <div className="section-title">Island Status</div>
+            {(() => {
+              const md = (data.summary || '').replace(/盛り上がり状況/g, '状況');
+              const html = DOMPurify.sanitize(marked.parse(md, { async: false }) as string);
+              return <div className="prose prose-invert text-sm leading-relaxed break-anywhere" dangerouslySetInnerHTML={{ __html: html }} />;
+            })()}
+          </div>
+
+          {/* Highlights removed as it overlaps with Island Status content */}
+
+          {data.sources && data.sources.length > 0 && (
+            <div className="card">
+              <div className="section-title">Sources</div>
+              <div className="grid-2">
+                {data.sources.map((s, i) => (
+                  <a key={i} href={s.url} target="_blank" rel="noreferrer" className="btn break-anywhere">{s.title || s.url}</a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="text-xs muted">Updated at: {new Date(data.updatedAt).toLocaleString()}</div>
+        </>
       )}
     </div>
   );

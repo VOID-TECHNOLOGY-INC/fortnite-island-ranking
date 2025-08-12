@@ -9,7 +9,11 @@ export function RankingTable({ islands }: Props) {
   if (islands.length === 0) return <p>No data</p>;
 
   return (
-    <table className="min-w-full divide-y divide-gray-200">
+    <table className="table islands-table">
+      <colgroup>
+        <col style={{ width: 48 }} />
+        <col />
+      </colgroup>
       <thead className="bg-gray-50">
         <tr>
           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
