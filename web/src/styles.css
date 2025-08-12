@@ -17,6 +17,19 @@ button, select { padding: 6px 10px; border-radius: 8px; border: 1px solid #e5e7e
 input { padding: 6px 10px; border-radius: 8px; border: 1px solid #e5e7eb33; background: transparent; color: inherit; }
 .rowlink { color: inherit; text-decoration: none; display: block; }
 
+/* Cards / layout */
+.card { border: 1px solid #e5e7eb33; border-radius: 12px; padding: 16px; background: #ffffff0d; }
+.card + .card { margin-top: 12px; }
+.card-header { display:flex; align-items: center; gap: 12px; }
+.card-title { font-size: 20px; font-weight: 700; margin: 0; }
+.badge { display:inline-block; padding: 2px 8px; border-radius: 999px; background: #e5e7eb33; font-size: 12px; }
+.btn { padding: 6px 10px; border-radius: 8px; border: 1px solid #e5e7eb33; background: transparent; color: inherit; cursor: pointer; }
+.btn:hover { background: #e5e7eb22; }
+.section-title { font-weight: 600; margin: 12px 0 8px; }
+.grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+@media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+.break-anywhere { overflow-wrap: anywhere; word-break: break-word; }
+
 /* RankingTable: make island name single-line with ellipsis */
 .island-cell { max-width: 100%; }
 .island-name { display: inline; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; vertical-align: bottom; }

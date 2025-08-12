@@ -12,41 +12,49 @@ export default function IslandDetail() {
   const { data, isLoading, error } = useSWR<Research>(['research', code, name, lang], () => fetchIslandResearch(code!, name, lang));
 
   return (
-    <div>
-      <div className="toolbar">
-        <h2 style={{ margin: 0 }}>{name ? `${name} (${code})` : code}</h2>
-        <div style={{ flex: 1 }} />
+    <div className="space-y-4">
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title break-anywhere">{name || code}</h2>
+          <span className="badge">{code}</span>
+        </div>
+        <div className="muted" style={{ marginTop: 6 }}>Auto research powered by Perplexity</div>
       </div>
-      {isLoading && <div>Loading...</div>}
-      {error && <div className="text-red-500">Error: {String((error as any)?.message || error)}</div>}
+
+      {isLoading && <div className="card">Loading...</div>}
+      {error && <div className="card text-red-500">Error: {String((error as any)?.message || error)}</div>}
+
       {data && (
-        <div className="space-y-4">
-          <section>
-            <h3 className="font-semibold mb-2">Overview</h3>
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">{data.summary}</div>
-          </section>
+        <>
+          <div className="card">
+            <div className="section-title">Overview</div>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed break-anywhere">{data.summary}</div>
+          </div>
+
           {data.highlights && data.highlights.length > 0 && (
-            <section>
-              <h3 className="font-semibold mb-2">Highlights</h3>
+            <div className="card">
+              <div className="section-title">Highlights</div>
               <ul className="list-disc pl-6 text-sm">
                 {data.highlights.map((h, i) => (
-                  <li key={i}>{h}</li>
+                  <li key={i} className="break-anywhere">{h}</li>
                 ))}
               </ul>
-            </section>
+            </div>
           )}
+
           {data.sources && data.sources.length > 0 && (
-            <section>
-              <h3 className="font-semibold mb-2">Sources</h3>
-              <ul className="list-disc pl-6 text-sm break-all">
+            <div className="card">
+              <div className="section-title">Sources</div>
+              <div className="grid-2">
                 {data.sources.map((s, i) => (
-                  <li key={i}><a href={s.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{s.title || s.url}</a></li>
+                  <a key={i} href={s.url} target="_blank" rel="noreferrer" className="btn break-anywhere">{s.title || s.url}</a>
                 ))}
-              </ul>
-            </section>
+              </div>
+            </div>
           )}
-          <div className="text-xs text-gray-400">Updated at: {new Date(data.updatedAt).toLocaleString()}</div>
-        </div>
+
+          <div className="text-xs muted">Updated at: {new Date(data.updatedAt).toLocaleString()}</div>
+        </>
       )}
     </div>
   );
