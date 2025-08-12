@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import { useTranslation } from 'react-i18next';
 import { fetchIslandResearch, type Research } from '../lib/api';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 export default function IslandDetail() {
   const { code } = useParams();
@@ -27,8 +29,11 @@ export default function IslandDetail() {
       {data && (
         <>
           <div className="card">
-            <div className="section-title">Overview</div>
-            <div className="whitespace-pre-wrap text-sm leading-relaxed break-anywhere">{data.summary}</div>
+            <div className="section-title">Island Status</div>
+            {(() => {
+              const html = DOMPurify.sanitize(marked.parse(data.summary || '', { async: false }) as string);
+              return <div className="prose prose-invert text-sm leading-relaxed break-anywhere" dangerouslySetInnerHTML={{ __html: html }} />;
+            })()}
           </div>
 
           {data.highlights && data.highlights.length > 0 && (
