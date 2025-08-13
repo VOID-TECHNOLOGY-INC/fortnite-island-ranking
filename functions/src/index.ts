@@ -86,11 +86,21 @@ app.get(['/islands', '/api/islands'], async (req, res) => {
 
   try {
     const listUrl = new URL('https://api.fortnite.com/ecosystem/v1/islands');
-    if (query) listUrl.searchParams.set('search', query);
+    const q = (query || '').trim();
+    // 短すぎる検索語はAPIに投げず、通常リストを表示
+    if (q.length >= 2) listUrl.searchParams.set('search', q);
     listUrl.searchParams.set('limit', String(limit));
 
     const listRes = await fetch(listUrl.toString());
-    if (!listRes.ok) throw new Error(`Upstream island list failed with ${listRes.status}`);
+    // 上流エラーの一部は空配列でフォールバック（UIで500にしない）
+    if (!listRes.ok) {
+      if ([400, 404, 422, 429].includes(listRes.status)) {
+        globalCache.set(cacheKey, [], ttlForWindow(window));
+        res.set('Cache-Control', 'public, max-age=60, s-maxage=120');
+        return res.json([]);
+      }
+      throw new Error(`Upstream island list failed with ${listRes.status}`);
+    }
     const listJson = (await listRes.json()) as any;
 
     let islands = (listJson.items || listJson.data || [])

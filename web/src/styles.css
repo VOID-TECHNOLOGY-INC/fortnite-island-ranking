@@ -3,6 +3,8 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
 .app { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
 .header { display:flex; align-items:center; gap:16px; padding:12px 20px; border-bottom: 1px solid #e5e7eb33; }
 .brand { font-weight: 700; }
+.brand-logo { height: 36px; max-width: 240px; object-fit: contain; display:block; }
+@media (max-width: 640px) { .brand-logo { height: 28px; max-width: 180px; } }
 .nav { display:flex; gap:12px; margin-left: auto; }
 .nav a { text-decoration: none; color: inherit; opacity: 0.8; }
 .nav a.active { font-weight: 600; opacity: 1; }
@@ -43,6 +45,17 @@ input { padding: 6px 10px; border-radius: 8px; border: 1px solid #e5e7eb33; back
 .island-cell { max-width: 100%; }
 .island-name { display: inline; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; vertical-align: bottom; }
 .island-meta { display: inline; margin-left: 8px; white-space: nowrap; opacity: .7; }
+.island-code, .island-creator { max-width: 100%; }
+.id-cell { white-space: nowrap; display:flex; align-items:center; gap:2px; }
+.island-creator { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.id-text { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.copy-btn { flex: 0 0 auto; border: 1px solid #e5e7eb66; background: transparent; width: 22px; height: 22px; border-radius: 6px; cursor: pointer; font-size: 14px; line-height: 1; display:inline-flex; align-items:center; justify-content:center; }
+
+/* Loading indicator */
+.loading-row { display:flex; align-items:center; gap:8px; }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #93c5fd33; border-top-color: #93c5fd; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.copy-btn:hover { background: #e5e7eb22; }
 
 /* Keep name + meta on one line and truncate overall */
 .island-cell a { display: inline-block; max-width: 100%; }
