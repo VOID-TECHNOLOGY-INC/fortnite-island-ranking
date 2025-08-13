@@ -10,10 +10,10 @@ export default function LanguageSwitcher() {
   };
   const lng = i18n.language.startsWith('ja') ? 'ja' : 'en';
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
-      <button onClick={() => change('ja')} aria-pressed={lng === 'ja'}>日本語</button>
-      <button onClick={() => change('en')} aria-pressed={lng === 'en'}>EN</button>
-    </div>
+    <select aria-label="Language" value={lng} onChange={(e) => change(e.target.value as any)}>
+      <option value="ja">日本語</option>
+      <option value="en">EN</option>
+    </select>
   );
 }
 

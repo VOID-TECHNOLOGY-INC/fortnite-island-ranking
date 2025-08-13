@@ -20,7 +20,7 @@ export function Home() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">{t('top_islands')}</h2>
+        <h2 className="text-2xl font-bold">{t('home.title')}</h2>
         <div className="flex items-center space-x-2">
           <input
             type="text"
@@ -28,6 +28,7 @@ export function Home() {
             value={query}
             onChange={e => setQuery(e.target.value)}
             className="border px-2 py-1 rounded"
+            style={{ marginRight: 12 }}
           />
           <WindowSelector value={window} onChange={setWindow} />
           <button onClick={() => mutate()} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">

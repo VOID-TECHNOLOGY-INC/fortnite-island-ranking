@@ -1,12 +1,13 @@
 {
-  "nav": { "home": "Home", "compare": "Compare" },
+  "nav": { "home": "Home" },
   "footer": { "note": "Unofficial dashboard using the public Fortnite Data API (7-day window)." },
   "actions": { "refresh": "Refresh", "search": "Search", "addCompare": "Add to Compare" },
-  "filters": { "window": "Window", "sort": "Sort", "category": "Category", "query": "Island name or code" },
+  "filters": { "window": "Period", "sort": "Sort", "category": "Category", "query": "Island name or code" },
   "windows": { "10m": "10 min", "1h": "1 hour", "24h": "24 hours" },
   "sort": { "hype": "HypeScore", "unique": "Unique Players", "peak": "Peak CCU", "d1": "D1 Retention" },
   "kpi": { "hype": "HypeScore", "unique": "Unique", "peak": "Peak CCU", "mpp": "Min/Player", "d1": "D1", "d7": "D7" },
   "home": { "title": "Top Islands", "surge": "Surging" },
-  "detail": { "metrics": "Metrics", "retention": "Retention", "favorites": "Favorites", "recommends": "Recommends" }
+  "detail": { "metrics": "Metrics", "retention": "Retention", "favorites": "Favorites", "recommends": "Recommends" },
+  "search_placeholder": "Search"
 }
 
