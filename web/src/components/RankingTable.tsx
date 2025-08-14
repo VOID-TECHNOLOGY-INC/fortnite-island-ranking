@@ -13,15 +13,15 @@ export function RankingTable({ islands }: Props) {
       <colgroup>
         <col style={{ width: 48 }} />
         <col style={{ width: '50%' }} />
-        <col style={{ width: 260 }} />
-        <col style={{ width: 260 }} />
+        <col style={{ width: 260 }} className="id-col" />
+        <col style={{ width: 260 }} className="creator-col" />
       </colgroup>
       <thead className="bg-gray-50">
         <tr>
           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Island</th>
-          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider id-col">ID</th>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider creator-col">Creator</th>
         </tr>
       </thead>
       <tbody className="bg-white divide-y divide-gray-200">
@@ -31,6 +31,10 @@ export function RankingTable({ islands }: Props) {
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 island-cell">
               <Link to={`/island/${island.code}?name=${encodeURIComponent(island.name)}`} className="hover:underline">
                 <span className="island-name">{island.name}</span>
+                <span className="island-meta mobile-only">
+                  {island.code}
+                  {island.creator ? ` · ${island.creator}` : ''}
+                </span>
               </Link>
             </td>
             <td className="px-6 py-4 text-sm text-gray-500 island-code id-cell" title={island.code}>
@@ -44,7 +48,7 @@ export function RankingTable({ islands }: Props) {
                 📋
               </button>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 island-creator" title={island.creator}>{island.creator}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 island-creator creator-cell" title={island.creator}>{island.creator}</td>
           </tr>
         ))}
       </tbody>

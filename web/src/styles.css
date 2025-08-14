@@ -50,6 +50,7 @@ input { padding: 6px 10px; border-radius: 8px; border: 1px solid #e5e7eb33; back
 .island-creator { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .id-text { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 .copy-btn { flex: 0 0 auto; border: 1px solid #e5e7eb66; background: transparent; width: 22px; height: 22px; border-radius: 6px; cursor: pointer; font-size: 14px; line-height: 1; display:inline-flex; align-items:center; justify-content:center; }
+.mobile-only { display: none; }
 
 /* Loading indicator */
 .loading-row { display:flex; align-items:center; gap:8px; }
@@ -63,5 +64,11 @@ input { padding: 6px 10px; border-radius: 8px; border: 1px solid #e5e7eb33; back
 
 /* table layout fixed for ellipsis */
 .islands-table { table-layout: fixed; width: 100%; }
+
+@media (max-width: 640px) {
+  .mobile-only { display: block; margin-left: 0; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .id-col, .creator-col { width: 0 !important; }
+  .id-cell, .creator-cell, th.id-col, th.creator-col { display: none; }
+}
 
 
