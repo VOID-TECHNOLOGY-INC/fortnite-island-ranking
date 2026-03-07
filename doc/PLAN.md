@@ -53,11 +53,12 @@
   - previous window delta
   - 24h delta
   - missing / empty series の正規化
-- P0-05: `/api/top-islands` を v2 用の基盤 API として拡張する
-  - `metrics.uniquePlayers` だけでなく、必要 KPI と deltas を段階的に返せるようにする
-  - `/api/dashboard` の内部データソースとして再利用できる形に寄せる
+- P0-05: `dashboard` / `overview` / `compare` で共通利用する island summary / aggregation layer を実装する
+  - `metrics.uniquePlayers` だけでなく、必要 KPI と deltas を同じ builder で返せるようにする
+  - `/api/top-islands` は必要に応じて同レイヤーを使う互換 endpoint として維持する
 - P0-06: dashboard 系キャッシュキーを整理する
-  - `window`, `sort`, `tags`, `creator`, `query`, `view` を含む
+  - `window`, `sort`, `tags`, `creator`, `query` を含む
+  - `tab`, `view` は URL 状態として保持し、API キャッシュキーには含めない
   - 部分成功時の degraded flag も返却できるようにする
 
 #### フロントエンドタスク
@@ -113,12 +114,14 @@
 #### バックエンドタスク
 
 - P1-01: `GET /api/dashboard` を追加する
+  - query: `window`, `query`, `sort`, `tags`, `creator`
   - ranking
   - rising
   - highRetention
   - highRecommend
   - updatedAt
   - degraded / partial metadata
+  - `sort` は ranking のみ、`query` / `tags` / `creator` は全セクションの候補集合に適用する
 - P1-02: dashboard warm 処理を追加または `warmTopIslands` を拡張する
 - P1-03: タグ / クリエイター / ソート条件でフィルタできるようデータ整形を拡張する
 
@@ -184,7 +187,7 @@
 
 #### バックエンドタスク
 
-- P2-01: `GET /api/islands/:code/overview` を追加する
+- P2-01: `GET /api/islands/:code/overview?window=` を追加する
   - basic
   - tags
   - kpis
