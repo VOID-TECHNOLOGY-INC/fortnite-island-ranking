@@ -55,9 +55,11 @@
   - missing / empty series の正規化
 - P0-05: `dashboard` / `overview` / `compare` で共通利用する island summary / aggregation layer を実装する
   - `metrics.uniquePlayers` だけでなく、必要 KPI と deltas を同じ builder で返せるようにする
-  - `/api/top-islands` は必要に応じて同レイヤーを使う互換 endpoint として維持する
+  - window 単位の基礎 snapshot feed を作り、`dashboard` はその母集合から ranking / rising / summary / related candidates を組み立てる
+  - `/api/top-islands` は必要に応じて同レイヤーを使う互換 endpoint として維持し、自由入力 `query` は既存 `/api/islands` に残す
 - P0-06: dashboard 系キャッシュキーを整理する
-  - `window`, `sort`, `tags`, `creator`, `query` を含む
+  - dashboard の基礎キャッシュは `window` 単位で固定する
+  - `sort`, `tags`, `creator` は precomputed candidate set への絞り込みで扱い、`query` は `/api/islands` 側の search mode に残す
   - `tab`, `view` は URL 状態として保持し、API キャッシュキーには含めない
   - 部分成功時の degraded flag も返却できるようにする
 
@@ -72,8 +74,9 @@
   - `creator`
   - `view`
 - P0-08: localStorage helper を追加する
-  - compare list
+  - compare draft（URL 未指定時の復元用）
   - watchlist
+  - recent searches
   - recently viewed islands
 - P0-09: API client を v2 用に整理する
   - `fetchDashboard`
@@ -88,15 +91,20 @@
 - P0-11: スタイリング方針を整理する
   - Tailwind 風クラスに依存しない形へ寄せる
   - `styles.css` にレイアウトトークン、カード、テーブル、モバイル用ルールを追加する
+- P0-12: web 側の unit test 基盤を追加する
+  - `vitest`
+  - React Testing Library
+  - `web/package.json` の `test` script
+  - URL state / localStorage helper を即座に検証できる状態
 
 #### テストタスク
 
-- P0-12: Functions の unit test を追加する
+- P0-13: Functions の unit test を追加する
   - HypeScore
   - delta 計算
   - empty series
   - partial failure fallback
-- P0-13: URL state / localStorage helper の unit test を追加する
+- P0-14: URL state / localStorage helper の unit test を追加する
 
 #### Phase 0 完了条件
 
@@ -114,16 +122,18 @@
 #### バックエンドタスク
 
 - P1-01: `GET /api/dashboard` を追加する
-  - query: `window`, `query`, `sort`, `tags`, `creator`
+  - query: `window`, `sort`, `tags`, `creator`
   - ranking
   - rising
   - highRetention
   - highRecommend
   - updatedAt
   - degraded / partial metadata
-  - `sort` は ranking のみ、`query` / `tags` / `creator` は全セクションの候補集合に適用する
+  - `sort` は ranking のみ、`tags` / `creator` は全セクションの候補集合に適用する
 - P1-02: dashboard warm 処理を追加または `warmTopIslands` を拡張する
-- P1-03: タグ / クリエイター / ソート条件でフィルタできるようデータ整形を拡張する
+  - warm 対象は `window` ごとの基礎 snapshot に限定する
+- P1-03: タグ / クリエイター / ソート条件でフィルタできるよう candidate set / facet 生成を拡張する
+  - 自由入力 `query` は既存 `/api/islands` を search mode として使い分ける
 
 #### フロントエンドタスク
 
@@ -199,6 +209,7 @@
   - same tag
   - same creator
   - similar top islands
+  - Phase 0 で作る creator / tag index と related candidate cache を利用する
 
 #### フロントエンドタスク
 
@@ -221,6 +232,7 @@
 - P2-09: AI リサーチ領域を詳細下部へ再配置する
   - 「参考情報」明記
   - updatedAt 表示
+  - `再生成` は Phase 4 の refresh contract 完了後に有効化する
 - P2-10: recently viewed を保存し、ホームの補助エリアと連携する
 - P2-11: share URL に `window` を含めてコピーする
 
@@ -314,10 +326,14 @@
   - AI リサーチの補助表現
 - P4-02: live region と keyboard navigation を整備する
 - P4-03: コピー成功、エラー、更新成功の通知をスクリーンリーダー対応にする
-- P4-04: 計測イベントを定義し、送信ポイントを実装する
-- P4-05: cache TTL と warm 対象を実測で調整する
-- P4-06: README と画面仕様の更新を行う
-- P4-07: 回帰 E2E と Functions unit test を増強する
+- P4-04: AI リサーチ再生成の API 契約を追加する
+  - `refresh=1`
+  - cache bypass
+  - island / lang 単位の throttle
+- P4-05: 計測イベントを定義し、送信ポイントを実装する
+- P4-06: cache TTL と warm 対象を実測で調整する
+- P4-07: README と画面仕様の更新を行う
+- P4-08: 回帰 E2E と Functions unit test を増強する
 
 #### Phase 4 完了条件
 
@@ -333,12 +349,13 @@
 - W1-02: dashboard / overview / compare で共通利用する island summary builder を作る
 - W1-03: HypeScore と breakdown を共通利用できるようにする
 - W1-04: partial failure 時も配列構造を壊さないようにする
-- W1-05: scheduler warm の対象を `top-islands` から `dashboard` 系へ広げる
+- W1-05: scheduler warm の対象を `top-islands` から window 別 dashboard base snapshot へ広げる
+- W1-06: creator / tag index と related candidate cache を作る
 
 ### 4.2 フロント状態管理
 
 - W2-01: URL query parser / serializer を追加する
-- W2-02: compare / watchlist / recent の localStorage schema を固定する
+- W2-02: compare fallback / watchlist / recent search / recent view の localStorage schema を固定する
 - W2-03: SWR key 設計を統一する
 - W2-04: optimistic UI を使わず、まずは整合性優先で更新する
 
@@ -355,17 +372,20 @@
 
 ### 4.4 品質保証
 
-- W4-01: Functions unit test を endpoint 単位ではなく utility 単位で厚くする
-- W4-02: Playwright はホーム、詳細、比較、watchlist の 4 導線を優先する
-- W4-03: モバイル viewport の回帰を追加する
+- W4-01: web unit test 基盤（Vitest + React Testing Library）を導入する
+- W4-02: Functions unit test を endpoint 単位ではなく utility 単位で厚くする
+- W4-03: Playwright はホーム、詳細、比較、watchlist の 4 導線を優先する
+- W4-04: モバイル viewport の回帰を追加する
 
 ## 5. 依存関係
 
 1. HypeScore 計算と API 正規化が終わるまで、ホームの最終 UI は固定しない
 2. URL state helper ができるまで、Home / Detail / Compare の state 実装は開始しない
-3. `overview` API ができるまで、詳細ページの KPI と related islands は着手しない
-4. compare state と `GET /api/compare` が揃うまで、Compare UI は仮実装に留める
-5. Watchlist は compare state と同じ localStorage 基盤の上に載せる
+3. creator / tag index と related candidate cache ができるまで、related islands UI は着手しない
+4. `overview` API ができるまで、詳細ページの KPI 表示は着手しない
+5. compare state と `GET /api/compare` が揃うまで、Compare UI は仮実装に留める
+6. Watchlist は compare state と同じ localStorage 基盤の上に載せる
+7. AI リサーチの `再生成` ボタンは refresh contract ができるまで有効化しない
 
 ## 6. 実装順の推奨
 
