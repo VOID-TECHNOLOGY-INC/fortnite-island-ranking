@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "dev": "node --env-file=.env --watch ./lib/dev-server.cjs",
+    "dev": "npm run clean && npm run build && node --env-file=.env ./lib/dev-server.js",
+    "dev:mock": "npm run clean && npm run build && USE_MOCK=1 node --env-file=.env ./lib/dev-server.js",
     "clean": "rimraf lib",
     "test": "vitest run"
   },

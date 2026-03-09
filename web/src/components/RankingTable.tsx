@@ -1,59 +1,105 @@
 import { Link } from 'react-router-dom';
-import type { Island } from '../lib/types';
+import type { RankedIslandSummary, TimeWindow } from '../lib/types';
+import { IslandActions } from './IslandActions';
 
 type Props = {
-  islands: Island[];
+  items: RankedIslandSummary[];
+  windowValue: TimeWindow;
+  compareCodes: string[];
+  watchlistCodes: string[];
+  onToggleCompare: (item: RankedIslandSummary) => void;
+  onToggleWatchlist: (item: RankedIslandSummary) => void;
+  onCopyCode: (code: string) => void;
 };
 
-export function RankingTable({ islands }: Props) {
-  if (islands.length === 0) return <p>No data</p>;
+function formatCompact(value: number | null) {
+  if (value == null) {
+    return 'No data';
+  }
+
+  return Intl.NumberFormat('en-US', {
+    notation: value >= 1000 ? 'compact' : 'standard',
+    maximumFractionDigits: 1
+  }).format(value);
+}
+
+function formatChange(value: number | null | undefined) {
+  if (value == null) {
+    return 'No change data';
+  }
+  return `${value > 0 ? '+' : ''}${Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(value)}`;
+}
+
+export function RankingTable({
+  items,
+  windowValue,
+  compareCodes,
+  watchlistCodes,
+  onToggleCompare,
+  onToggleWatchlist,
+  onCopyCode
+}: Props) {
+  if (items.length === 0) return <p>No data</p>;
 
   return (
     <table className="table islands-table">
       <colgroup>
         <col style={{ width: 48 }} />
-        <col style={{ width: '50%' }} />
-        <col style={{ width: 260 }} className="id-col" />
-        <col style={{ width: 260 }} className="creator-col" />
+        <col style={{ width: '26%' }} />
+        <col style={{ width: 132 }} />
+        <col style={{ width: 132 }} />
+        <col style={{ width: 132 }} />
+        <col style={{ width: 148 }} />
+        <col style={{ width: 240 }} />
       </colgroup>
-      <thead className="bg-gray-50">
+      <thead>
         <tr>
-          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Island</th>
-          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider id-col">ID</th>
-          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider creator-col">Creator</th>
+          <th scope="col">#</th>
+          <th scope="col">Island</th>
+          <th scope="col">HypeScore</th>
+          <th scope="col">Unique</th>
+          <th scope="col">Peak CCU</th>
+          <th scope="col">Latest Change</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
-      <tbody className="bg-white divide-y divide-gray-200">
-        {islands.map((island, index) => (
-          <tr key={island.code}>
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 island-cell">
-              <Link to={`/island/${island.code}?name=${encodeURIComponent(island.name)}`} className="hover:underline">
-                <span className="island-name">{island.name}</span>
-                <span className="island-meta mobile-only">
-                  {island.code}
-                  {island.creator ? ` · ${island.creator}` : ''}
+      <tbody>
+        {items.map((item, index) => (
+          <tr key={item.code}>
+            <td className="table-rank">{item.rank ?? index + 1}</td>
+            <td className="island-cell">
+              <Link to={`/island/${item.code}?name=${encodeURIComponent(item.name)}&window=${windowValue}`} className="table-link">
+                <strong className="island-name">{item.name}</strong>
+                <span className="island-meta">
+                  {item.creator} · {item.code}
                 </span>
               </Link>
+              <div className="table-tag-row">
+                {item.tags.slice(0, 3).map((tag) => (
+                  <span key={tag} className="tag-pill tag-pill--read-only">
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </td>
-            <td className="px-6 py-4 text-sm text-gray-500 island-code id-cell" title={island.code}>
-              <span className="id-text" aria-label="Island code">{island.code}</span>
-              <button
-                className="copy-btn"
-                onClick={() => navigator.clipboard?.writeText(island.code)}
-                aria-label={`Copy ${island.code}`}
-                title="Copy"
-              >
-                📋
-              </button>
+            <td>{formatCompact(item.hypeScore)}</td>
+            <td>{formatCompact(item.metrics.uniquePlayers)}</td>
+            <td>{formatCompact(item.metrics.peakCcu)}</td>
+            <td>{formatChange(item.deltas.latestChange ?? null)}</td>
+            <td>
+              <IslandActions
+                compact
+                code={item.code}
+                isInCompare={compareCodes.includes(item.code)}
+                isWatchlisted={watchlistCodes.includes(item.code)}
+                onToggleCompare={() => onToggleCompare(item)}
+                onToggleWatchlist={() => onToggleWatchlist(item)}
+                onCopyCode={() => onCopyCode(item.code)}
+              />
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 island-creator creator-cell" title={island.creator}>{island.creator}</td>
           </tr>
         ))}
       </tbody>
     </table>
   );
 }
-
-
