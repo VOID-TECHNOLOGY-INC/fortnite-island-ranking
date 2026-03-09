@@ -1,131 +1,176 @@
 ## Fortnite Island Ranking Dashboard
 
-Firebase Hosting + Functions で動作する、Fortnite Island ランキング/詳細ビューアです。日本語/英語対応。
+Firebase Hosting + Functions で動作する、Fortnite Island 向けの発見・比較・追跡ダッシュボードです。フロントエンドは `web/`、API は `functions/` にあります。
 
-- ランキング（一覧）は Fortnite Ecosystem Data API を使用
-- 各島の詳細（Island Status/概要/特徴/話題）は Perplexity AI による自動リサーチ結果を表示
+### v2 の主な機能
 
-参考: Swagger `https://api.fortnite.com/ecosystem/v1/docs/`
+- ホームダッシュボード
+  - `Top` / `Rising` / `Watchlist`
+  - 期間、検索、ソート、タグ、クリエイターの URL 同期
+  - 比較追加、Watchlist 追加、コードコピー
+- 島詳細
+  - KPI カード
+  - 時系列チャート
+  - Related Islands
+  - AI リサーチを補助情報として下部表示
+- 比較
+  - 2〜4 島の URL 共有可能な比較
+  - KPI テーブル
+  - トレンドチャート
+  - レーダーチャート
+- 継続利用
+  - compare draft
+  - watchlist
+  - recent searches
+  - recently viewed islands
 
-### セットアップ（ローカル）
+### 技術構成
 
-1) Firebase CLI をインストールし、ログイン
+- `web/`
+  - React + Vite + TypeScript
+  - React Router
+  - SWR
+  - Recharts
+  - Vitest + React Testing Library
+- `functions/`
+  - Firebase Functions + Express
+  - Fortnite Data API 連携
+  - Perplexity API 連携
+  - Vitest
+- `e2e/`
+  - Playwright
+
+### ディレクトリ
+
+- `web/`: ダッシュボード UI
+- `functions/`: API とデータ整形
+- `e2e/`: E2E テスト
+- `doc/`: 仕様と実装計画
+
+### セットアップ
+
+1. 依存関係をインストール
 
 ```bash
-npm i -g firebase-tools
-firebase login
+npm install --prefix web
+npm install --prefix functions
+npm install
 ```
 
-2) 依存関係インストール
+2. `functions/.env` を作成
 
 ```bash
-# Frontend
-cd web && npm i && cd ..
-# Functions
-cd functions && npm i && cd ..
-```
-
-3) 環境変数（Functions/.env）
-
-```
-# Fortniteモック利用: 1 でモック、0 で本番API
+# Fortnite モック利用: 1 でモック、0 で本番 API
 USE_MOCK=0
 
-# Perplexity API（詳細ページの自動リサーチで使用）
+# AI リサーチ
 PERPLEXITY_API_KEY=your_api_key
-# 任意（利用可能なモデルID。未設定時は候補を順次フォールバック）
+# 任意
 PERPLEXITY_MODEL=pplx-70b-online
 ```
 
-4) 開発用起動（例）
+### ローカル開発
+
+API を単体で動かす場合:
 
 ```bash
-# Hosting/Functions エミュレータ
+npm --prefix functions run dev
+```
+
+モック API を使う場合:
+
+```bash
+npm --prefix functions run dev:mock
+```
+
+フロントを動かす場合:
+
+```bash
+npm --prefix web run dev
+```
+
+E2E 用フロント:
+
+```bash
+npm --prefix web run dev:e2e
+```
+
+Firebase Emulator を使う場合:
+
+```bash
 firebase emulators:start
-
-# 別ターミナルでフロント（Vite）
-cd web
-npm run dev
 ```
 
-### デプロイ
+### API
 
-```bash
-# フロントのみ変更時（Hostingのみ）
-npm run build --prefix web
-firebase deploy --only hosting
-
-# Functions のみ変更時（APIのみ）
-npm run build --prefix functions
-firebase deploy --only functions:api
-
-# まとめて
-firebase deploy
-```
-
-注意: Functions（第2世代）はビルド/コンテナ化/レジストリ反映/ローリング更新のため更新に時間を要します。未使用依存の削減や対象デプロイ（--only）で短縮可能です。
-
-### ディレクトリ構成
-
-- `web/`: Vite + React + TypeScript
-  - i18n（react-i18next）/ SWR / marked + DOMPurify（Markdown表示）
-  - UI: 3カラム（Island/ID/Creator）、IDコピー、バナー、favicon、言語ドロップダウン、ローディングスピナー
-- `functions/`: Firebase Functions v2 + Express
-  - Fortnite API プロキシ、Perplexity API 連携、簡易メモリキャッシュ
-- `scripts/`, `doc/`, `e2e/` など
-
-### フロントの使い方/仕様
-
-- 検索プレースホルダは「Search」
-- 期間ラベルは「期間/Period」、選択肢は 10m / 1h / 24h
-- ランキング表は以下の3列
-  - Island（島名。クリックで詳細へ）
-  - ID（島コード。右にコピーアイコン）
-  - Creator（制作者）
-- 詳細ページ
-  - 左上に戻る矢印アイコン
-  - 「Auto research powered by Perplexity」注記
-  - リサーチ中はスピナー付き Loading を表示
-
-### API（Functions, /api 配下）
-
-- GET `/api/islands`
-  - クエリ: `window` 10m|1h|24h（デフォルト10m）, `query`（部分一致。2文字未満は上流検索に渡さず通常一覧）, `sort`（既定 hype）
-  - レスポンス: `[{ code, name, creator, metrics? }]`
-  - エラーハンドリング: 上流 400/404/422/429 は空配列を返却（UIで500にしない）
-
-- GET `/api/top-islands`
-  - 上位島を包括クロールし `uniquePlayers` でソート
-  - Cloud Scheduler により10分おきにキャッシュ事前温め
-
-- GET `/api/islands/:code/research?name=&lang=`
-  - Perplexity API 経由でリサーチ。Markdown の固定見出しで返すようプロンプトを制御（Island Status / 状況・概要・特徴・話題、出典/Sources）
-  - レスポンス: `{ summary: string, sources: {url,title?}[], updatedAt: string }`
-
-### キャッシュ/スケジューラ
-
-- メモリキャッシュ（`globalCache`）
-  - 10m/1h/24h に応じたTTL
-- スケジュール（`warmTopIslands`）
-  - 10分おきに `/api/top-islands` を更新
+- `GET /api/dashboard`
+  - `window`, `sort`, `tags`, `creator`
+  - ranking / rising / highRetention / highRecommend / facets / degraded
+- `GET /api/islands`
+  - `window`, `query`, `limit`
+  - 自由入力検索
+- `GET /api/islands/:code/overview`
+  - `window`
+  - island / kpis / deltas / hypeScore / related / series / researchStatus
+- `GET /api/compare`
+  - `window`, `codes`
+  - islands / normalized scores / metric series
+- `GET /api/islands/:code/metrics`
+  - 互換用途の metric series
+- `GET /api/islands/:code/research`
+  - AI リサーチ本文と出典
 
 ### テスト
 
-- Unit（Functions）: Vitest
+Functions unit test:
 
 ```bash
-cd functions
-npm run test
+npm test --prefix functions
 ```
 
-- E2E（Web）: Playwright
+Web unit test:
+
+```bash
+npm test --prefix web
+```
+
+Build:
+
+```bash
+npm run build --prefix functions
+npm run build --prefix web
+```
+
+E2E:
 
 ```bash
 npm run test:e2e
 ```
 
-### 注意事項
+### デプロイ
 
-- Fortnite API のメトリクスは `series/data/points/intervals` のいずれかで返るため汎用的に解釈
-- Perplexity のモデルIDはプランにより利用可否が異なるため、`PERPLEXITY_MODEL` 未設定時は複数候補でフォールバック
+Hosting のみ:
 
+```bash
+npm run build --prefix web
+firebase deploy --only hosting
+```
+
+Functions のみ:
+
+```bash
+npm run build --prefix functions
+firebase deploy --only functions:api
+```
+
+まとめて:
+
+```bash
+firebase deploy
+```
+
+### 補足
+
+- dashboard 系は `window` 単位でキャッシュし、検索は `/api/islands` に分離しています。
+- compare / watchlist / recent state は `localStorage` に保持します。
+- 主要導線は `Home` / `IslandDetail` / `Compare` / `Watchlist persistence` の E2E で検証しています。

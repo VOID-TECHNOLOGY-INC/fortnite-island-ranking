@@ -12,7 +12,7 @@ import type {
 } from './types';
 
 const WINDOWS: TimeWindow[] = ['10m', '1h', '24h'];
-const TABS: DashboardTab[] = ['top', 'rising'];
+const TABS: DashboardTab[] = ['top', 'rising', 'watchlist'];
 const SORTS: DashboardSort[] = [
   'hype',
   'uniquePlayers',

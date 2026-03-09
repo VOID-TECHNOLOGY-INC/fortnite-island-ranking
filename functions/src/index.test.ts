@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { buildPerplexityPrompts } from './index.js';
+import { describe, expect, it } from 'vitest';
+import { buildPerplexityPrompts } from './lib/research.js';
 
 describe('buildPerplexityPrompts', () => {
   it('ja prompt contains required headings and prefers sources', () => {
@@ -26,5 +26,3 @@ describe('buildPerplexityPrompts', () => {
     expect(user).toMatch(/YouTube|Reddit|official/);
   });
 });
-
-

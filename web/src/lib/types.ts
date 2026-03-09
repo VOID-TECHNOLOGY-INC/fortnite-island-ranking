@@ -1,6 +1,6 @@
 export type TimeWindow = '10m' | '1h' | '24h';
 
-export type DashboardTab = 'top' | 'rising';
+export type DashboardTab = 'top' | 'rising' | 'watchlist';
 export type DashboardView = 'table' | 'cards';
 export type DashboardSort =
   | 'hype'

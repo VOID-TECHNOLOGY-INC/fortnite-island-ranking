@@ -123,7 +123,7 @@ describe('urlState', () => {
     });
 
     act(() => {
-      result.current[1]((current) => ({
+      result.current[1]((current: (typeof result.current)[0]) => ({
         codes: [...current.codes, '2222', '3333', '4444', '5555']
       }));
     });

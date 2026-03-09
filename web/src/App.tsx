@@ -5,6 +5,8 @@ import LanguageSwitcher from './components/LanguageSwitcher';
 export default function App() {
   const { t } = useTranslation();
   const location = useLocation();
+  const activeTab = new URLSearchParams(location.search).get('tab');
+
   return (
     <div className="app">
       <header className="header">
@@ -15,6 +17,8 @@ export default function App() {
         </div>
         <nav className="nav">
           <Link to="/" className={location.pathname === '/' ? 'active' : ''}>{t('nav.home')}</Link>
+          <Link to="/?tab=watchlist" className={location.pathname === '/' && activeTab === 'watchlist' ? 'active' : ''}>Watchlist</Link>
+          <Link to="/compare" className={location.pathname === '/compare' ? 'active' : ''}>Compare</Link>
         </nav>
         <LanguageSwitcher />
       </header>
@@ -27,5 +31,3 @@ export default function App() {
     </div>
   );
 }
-
-
