@@ -10,6 +10,8 @@ type DashboardResponse = {
   rising?: DashboardIsland[];
 };
 
+type DashboardSection = keyof Pick<DashboardResponse, 'ranking' | 'rising'>;
+
 export async function installClipboardStub(page: Page) {
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'clipboard', {
@@ -21,13 +23,20 @@ export async function installClipboardStub(page: Page) {
   });
 }
 
-export async function fetchSmokeSelection(page: Page, count = 2): Promise<DashboardIsland[]> {
+export async function fetchSmokeSelection(
+  page: Page,
+  options: {
+    count?: number;
+    source?: DashboardSection;
+  } = {}
+): Promise<DashboardIsland[]> {
+  const { count = 2, source = 'ranking' } = options;
   const response = await page.request.get('/api/dashboard?window=24h');
   expect(response.ok()).toBeTruthy();
 
   const data = (await response.json()) as DashboardResponse;
   const seen = new Set<string>();
-  const islands = [...(data.ranking ?? []), ...(data.rising ?? [])].filter((item): item is DashboardIsland => {
+  const islands = (data[source] ?? []).filter((item): item is DashboardIsland => {
     if (!item?.code || !item?.name || seen.has(item.code)) {
       return false;
     }

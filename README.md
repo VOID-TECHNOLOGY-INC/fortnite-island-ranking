@@ -147,10 +147,15 @@ E2E:
 npm run test:e2e
 ```
 
-Firebase / deployed smoke E2E:
+Local smoke E2E:
 
 ```bash
 npm run test:e2e:smoke
+```
+
+Firebase / deployed smoke E2E:
+
+```bash
 npm run test:e2e:firebase
 ```
 
@@ -180,4 +185,5 @@ firebase deploy
 
 - dashboard 系は `window` 単位でキャッシュし、検索は `/api/islands` に分離しています。
 - compare / watchlist / recent state は `localStorage` に保持します。
-- `npm run test:e2e` は mock fixture 前提の回帰 E2E、`npm run test:e2e:firebase` は Firebase 上の live data に追従する smoke E2E です。
+- `npm run test:e2e` は mock fixture 前提の回帰 E2E、`npm run test:e2e:smoke` は local preview + mock functions を使う smoke E2E です。
+- `npm run test:e2e:firebase` は Firebase 上の live data に追従する smoke E2E です。
