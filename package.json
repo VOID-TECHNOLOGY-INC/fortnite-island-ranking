@@ -1,7 +1,9 @@
 {
   "scripts": {
     "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:smoke": "playwright test --config=playwright.smoke.config.ts",
+    "test:e2e:firebase": "PLAYWRIGHT_BASE_URL=https://fortnite-island-ranking.web.app playwright test --config=playwright.smoke.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2"
