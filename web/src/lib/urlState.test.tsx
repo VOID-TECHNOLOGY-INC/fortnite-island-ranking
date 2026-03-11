@@ -43,7 +43,7 @@ describe('urlState', () => {
 
   it('serializes home query state without default values', () => {
     const searchParams = serializeHomeQueryState({
-      window: '10m',
+      window: '24h',
       tab: 'top',
       sort: 'hype',
       query: 'battle',

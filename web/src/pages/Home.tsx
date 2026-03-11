@@ -21,7 +21,7 @@ import type {
   RecentViewEntry,
   WatchlistEntry
 } from '../lib/types';
-import { toDashboardRequest, useHomeQueryState } from '../lib/urlState';
+import { DEFAULT_HOME_QUERY_STATE, toDashboardRequest, useHomeQueryState } from '../lib/urlState';
 import { DashboardFilterBar } from '../components/DashboardFilterBar';
 import { RankingCards } from '../components/RankingCards';
 import { RankingTable } from '../components/RankingTable';
@@ -284,12 +284,7 @@ export function Home() {
   const resetFilters = () => {
     setSearchInput('');
     setQueryState({
-      window: '10m',
-      tab: 'top',
-      sort: 'hype',
-      query: '',
-      tags: [],
-      creator: '',
+      ...DEFAULT_HOME_QUERY_STATE,
       view: prefersCards ? 'cards' : 'table'
     });
   };
