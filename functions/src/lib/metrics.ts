@@ -1,6 +1,6 @@
 import type { DeltaValue, MetricKey, MetricPoint, MetricSeries, MetricSnapshot, TimeWindow } from './contracts.js';
 
-export type Bucket = 'TEN_MINUTE' | 'HOUR' | 'DAY';
+export type Bucket = 'MINUTE' | 'HOUR' | 'DAY';
 
 export const METRIC_LABELS: Record<MetricKey, string> = {
   uniquePlayers: 'Unique Players',
@@ -39,13 +39,13 @@ const METRIC_ALIASES: Record<string, MetricKey> = {
 };
 
 export function toBucket(window: TimeWindow): Bucket {
-  if (window === '10m') return 'TEN_MINUTE';
+  if (window === '10m') return 'MINUTE';
   if (window === '1h') return 'HOUR';
   return 'DAY';
 }
 
-export function toBucketSlug(bucket: Bucket): 'ten-minute' | 'hour' | 'day' {
-  if (bucket === 'TEN_MINUTE') return 'ten-minute';
+export function toBucketSlug(bucket: Bucket): 'minute' | 'hour' | 'day' {
+  if (bucket === 'MINUTE') return 'minute';
   if (bucket === 'HOUR') return 'hour';
   return 'day';
 }
@@ -83,17 +83,19 @@ export function normalizePoints(pointsRaw: unknown): MetricPoint[] {
     .map((point) => {
       if (Array.isArray(point)) {
         const [ts, value] = point;
+        const normalizedValue = value == null ? Number.NaN : Number(value);
         return {
           ts: String(ts ?? ''),
-          value: Number(value ?? 0)
+          value: normalizedValue
         };
       }
 
       if (point && typeof point === 'object') {
         const candidate = point as Record<string, unknown>;
+        const rawValue = candidate.value ?? candidate.v;
         return {
           ts: String(candidate.timestamp ?? candidate.ts ?? candidate.time ?? ''),
-          value: Number(candidate.value ?? candidate.v ?? 0)
+          value: rawValue == null ? Number.NaN : Number(rawValue)
         };
       }
 
