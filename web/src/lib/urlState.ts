@@ -26,7 +26,7 @@ const SORTS: DashboardSort[] = [
 const VIEWS: DashboardView[] = ['table', 'cards'];
 
 export const DEFAULT_HOME_QUERY_STATE: HomeQueryState = {
-  window: '10m',
+  window: '24h',
   tab: 'top',
   sort: 'hype',
   query: '',
@@ -36,11 +36,11 @@ export const DEFAULT_HOME_QUERY_STATE: HomeQueryState = {
 };
 
 export const DEFAULT_DETAIL_QUERY_STATE: DetailQueryState = {
-  window: '10m'
+  window: '24h'
 };
 
 export const DEFAULT_COMPARE_QUERY_STATE: CompareQueryState = {
-  window: '10m',
+  window: '24h',
   codes: []
 };
 
