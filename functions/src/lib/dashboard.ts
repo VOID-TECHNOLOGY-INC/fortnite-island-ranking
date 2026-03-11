@@ -50,12 +50,39 @@ type DashboardBase = {
   partialFailures: number;
 };
 
+const CORE_HEALTH_METRICS = new Set<MetricKey>(['uniquePlayers', 'peakCcu', 'favorites']);
+const DASHBOARD_BASE_METRICS: MetricKey[] = [
+  'uniquePlayers',
+  'peakCcu',
+  'favorites'
+];
+const ISLAND_SUMMARY_CONCURRENCY = 2;
+
+async function mapLimited<T, R>(inputs: T[], limit: number, worker: (input: T) => Promise<R>): Promise<R[]> {
+  const size = Math.max(1, Math.min(limit, inputs.length));
+  let cursor = 0;
+  const results = new Array<R>(inputs.length);
+
+  const workers = Array.from({ length: size }, async () => {
+    while (true) {
+      const index = cursor++;
+      if (index >= inputs.length) {
+        break;
+      }
+      results[index] = await worker(inputs[index]);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
 function prepareIsland(island: IslandRecord, series: MetricSeries[]): PreparedIsland {
   const metricSeries = new Map(series.map((entry) => [entry.metric, entry.points]));
   const kpis = METRIC_KEYS.map((metric) => buildMetricSnapshot(metric, metricSeries.get(metric) || []));
   const metrics = Object.fromEntries(kpis.map((snapshot) => [snapshot.metric, snapshot.latest])) as Partial<Record<MetricKey, number | null>>;
   const deltas = Object.fromEntries(kpis.map((snapshot) => [snapshot.metric, snapshot.previousDelta])) as Partial<Record<MetricKey, DeltaValue>>;
-  const missingMetrics = kpis.filter((snapshot) => snapshot.latest === null).length;
+  const missingMetrics = kpis.filter((snapshot) => snapshot.latest === null && CORE_HEALTH_METRICS.has(snapshot.metric)).length;
 
   return {
     island,
@@ -63,6 +90,21 @@ function prepareIsland(island: IslandRecord, series: MetricSeries[]): PreparedIs
     metrics,
     deltas,
     missingMetrics
+  };
+}
+
+function rehydratePreparedIsland(summary: IslandSummary, kpis: MetricSnapshot[] = []): PreparedIsland {
+  return {
+    island: {
+      code: summary.code,
+      name: summary.name,
+      creator: summary.creator,
+      tags: summary.tags
+    },
+    kpis,
+    metrics: summary.metrics,
+    deltas: summary.deltas,
+    missingMetrics: kpis.filter((snapshot) => snapshot.latest === null && CORE_HEALTH_METRICS.has(snapshot.metric)).length
   };
 }
 
@@ -133,12 +175,12 @@ function filterSummaries(summaries: IslandSummary[], tags: string[], creator?: s
 }
 
 async function buildDashboardBase(window: TimeWindow, dependencies: DashboardDependencies): Promise<DashboardBase> {
-  const cacheKey = `dashboard:base:v2:${window}`;
+  const cacheKey = `dashboard:base:v3:${window}`;
   const cached = globalCache.get<DashboardBase>(cacheKey);
   if (cached) return cached;
 
   const islands = await dependencies.computePopularIslands(window, 24);
-  const base = await buildSummariesForIslands(islands, window, dependencies);
+  const base = await buildSummariesForIslands(islands, window, dependencies, DASHBOARD_BASE_METRICS);
   globalCache.set(cacheKey, base, 600);
   return base;
 }
@@ -146,14 +188,15 @@ async function buildDashboardBase(window: TimeWindow, dependencies: DashboardDep
 async function buildSummariesForIslands(
   islands: IslandRecord[],
   window: TimeWindow,
-  dependencies: DashboardDependencies
+  dependencies: DashboardDependencies,
+  metrics: MetricKey[] = [...METRIC_KEYS]
 ): Promise<DashboardBase> {
   const updatedAt = dependencies.now();
   let partialFailures = 0;
 
-  const prepared = await Promise.all(islands.map(async (island) => {
+  const prepared = await mapLimited(islands, ISLAND_SUMMARY_CONCURRENCY, async (island) => {
     try {
-      const series = await dependencies.fetchIslandSeries(island.code, window);
+      const series = await dependencies.fetchIslandSeries(island.code, window, metrics);
       const preparedIsland = prepareIsland(island, series);
       if (preparedIsland.missingMetrics > 0) partialFailures += 1;
       return preparedIsland;
@@ -161,7 +204,7 @@ async function buildSummariesForIslands(
       partialFailures += 1;
       return prepareIsland(island, []);
     }
-  }));
+  });
 
   const summaries = summarizePrepared(prepared, updatedAt);
   return {
@@ -218,7 +261,7 @@ export async function buildSearchResponse(
 ): Promise<DashboardBase> {
   const deps = { ...DEFAULT_DEPENDENCIES, ...dependencies };
   const islands = await deps.computePopularIslands(options.window, options.limit, options.query);
-  return buildSummariesForIslands(islands, options.window, deps);
+  return buildSummariesForIslands(islands, options.window, deps, DASHBOARD_BASE_METRICS);
 }
 
 function scoreRelated(origin: IslandSummary, candidate: IslandSummary): number {
@@ -235,47 +278,39 @@ export async function buildIslandOverviewResponse(
   dependencies: Partial<DashboardDependencies> = {}
 ): Promise<IslandOverviewResponse | null> {
   const deps = { ...DEFAULT_DEPENDENCIES, ...dependencies };
-  const cacheKey = `overview:v2:${code}:${window}`;
+  const cacheKey = `overview:v3:${code}:${window}`;
   const cached = globalCache.get<IslandOverviewResponse>(cacheKey);
   if (cached) return cached;
 
   const base = await buildDashboardBase(window, deps);
-  const existing = base.summaries.find((summary) => summary.code === code);
+  const basePrepared = base.summaries.map((summary) => rehydratePreparedIsland(summary, base.kpisByCode.get(summary.code) || []));
+  const existing = basePrepared.find((summary) => summary.island.code === code) || null;
+  const island = existing?.island || await deps.getIslandByCode(code);
+  if (!island) return null;
 
-  let islandSummary = existing || null;
-  let kpis = islandSummary ? base.kpisByCode.get(code) || [] : [];
   let degraded = base.degraded;
+  let prepared = existing;
 
-  if (!islandSummary) {
-    const island = await deps.getIslandByCode(code);
-    if (!island) return null;
-
+  try {
     const series = await deps.fetchIslandSeries(code, window);
-    const prepared = prepareIsland(island, series);
-    const mergedSummaries = summarizePrepared([
-      ...base.summaries.map((summary) => ({
-        island: {
-          code: summary.code,
-          name: summary.name,
-          creator: summary.creator,
-          tags: summary.tags
-        },
-        metrics: summary.metrics,
-        deltas: summary.deltas,
-        kpis: base.kpisByCode.get(summary.code) || [],
-        missingMetrics: 0
-      })),
-      prepared
-    ], deps.now());
-
-    islandSummary = mergedSummaries.find((summary) => summary.code === code) || null;
-    kpis = prepared.kpis;
-    degraded = degraded || prepared.missingMetrics > 0;
+    prepared = prepareIsland(island, series);
+  } catch {
+    degraded = true;
+    prepared = existing || prepareIsland(island, []);
   }
 
+  if (!prepared) return null;
+
+  degraded = degraded || prepared.missingMetrics > 0;
+  const updatedAt = deps.now();
+  const mergedSummaries = summarizePrepared([
+    ...basePrepared.filter((summary) => summary.island.code !== code),
+    prepared
+  ], updatedAt);
+  const islandSummary = mergedSummaries.find((summary) => summary.code === code) || null;
   if (!islandSummary) return null;
 
-  const related = base.summaries
+  const related = mergedSummaries
     .filter((summary) => summary.code !== islandSummary?.code)
     .sort((left, right) => scoreRelated(islandSummary!, right) - scoreRelated(islandSummary!, left))
     .slice(0, 6);
@@ -283,9 +318,9 @@ export async function buildIslandOverviewResponse(
   const response = {
     window,
     island: islandSummary,
-    kpis,
+    kpis: prepared.kpis,
     related,
-    updatedAt: islandSummary.updatedAt,
+    updatedAt,
     degraded,
     researchStatus: {
       available: deps.isResearchAvailable()

@@ -7,6 +7,7 @@ import { buildCompareResponse, buildDashboardResponse, buildIslandOverviewRespon
 import { DASHBOARD_SORTS, TIME_WINDOWS, type DashboardSort, type DeltaValue, type HypeBreakdownComponent, type IslandSummary, type MetricKey, type MetricSnapshot, type TimeWindow } from './lib/contracts.js';
 import { fetchIslandSeries } from './lib/fortnite.js';
 import { buildPerplexityPrompts } from './lib/research.js';
+import { warmDashboardCaches } from './lib/warm.js';
 
 export const app = express();
 app.use(cors());
@@ -413,15 +414,6 @@ app.get(['/islands/:code/research', '/api/islands/:code/research'], async (req, 
 
 export const api = onRequest({ region: 'us-central1' }, app);
 
-export const warmTopIslands = onSchedule({ region: 'us-central1', schedule: 'every 10 minutes' }, async () => {
-  for (const window of TIME_WINDOWS) {
-    try {
-      await buildDashboardResponse({
-        window,
-        sort: 'hype'
-      });
-    } catch {
-      // ignore scheduler errors
-    }
-  }
+export const warmTopIslands = onSchedule({ region: 'us-central1', schedule: 'every 5 minutes' }, async () => {
+  await warmDashboardCaches();
 });

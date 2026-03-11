@@ -16,6 +16,16 @@ describe('metrics helpers', () => {
     ]);
   });
 
+  it('drops upstream points whose value is null', () => {
+    const points = normalizePoints([
+      { ts: '2025-01-01T00:00:00Z', value: 10 },
+      { ts: '2025-01-01T00:10:00Z', value: null },
+      ['2025-01-01T00:20:00Z', null]
+    ]);
+
+    expect(points).toEqual([{ ts: '2025-01-01T00:00:00Z', value: 10 }]);
+  });
+
   it('computes previous-window delta', () => {
     const delta = previousWindowDelta([
       { ts: '2025-01-01T00:00:00Z', value: 10 },
