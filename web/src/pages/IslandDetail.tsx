@@ -149,6 +149,25 @@ export default function IslandDetail() {
     setLiveMessage('Share URL copied');
   };
 
+  const [isRefreshingResearch, setIsRefreshingResearch] = useState(false);
+
+  const handleRegenerate = async () => {
+    if (!code || isRefreshingResearch) return;
+    
+    setIsRefreshingResearch(true);
+    try {
+      await researchQuery.mutate(
+        fetchIslandResearch(code, islandNameFromUrl, undefined, true),
+        { revalidate: true }
+      );
+      setLiveMessage('Research notes updated');
+    } catch (error) {
+      setLiveMessage('Failed to update research notes');
+    } finally {
+      setIsRefreshingResearch(false);
+    }
+  };
+
   const heroIsland = overviewQuery.data?.island;
   const overview = overviewQuery.data;
   const uniquePlayers24hDelta = overview?.deltas.uniquePlayers?.delta24h ?? null;
@@ -334,6 +353,16 @@ export default function IslandDetail() {
                     <p className="sidecar-card__eyebrow">AI research</p>
                     <h2 className="sidecar-card__title">Reference notes</h2>
                   </div>
+                  {overview.researchStatus.available ? (
+                    <button
+                      type="button"
+                      className={isRefreshingResearch ? 'btn btn--ghost is-loading' : 'btn btn--ghost'}
+                      onClick={handleRegenerate}
+                      disabled={isRefreshingResearch}
+                    >
+                      {isRefreshingResearch ? 'Regenerating...' : 'Regenerate'}
+                    </button>
+                  ) : null}
                 </div>
                 {researchQuery.isLoading ? (
                   <LoadingState title="Loading research notes" detail="AI research stays below KPI data and is treated as supporting information." />

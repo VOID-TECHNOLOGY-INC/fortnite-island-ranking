@@ -1,3 +1,6 @@
+import { globalCache } from '../cache.js';
+import type { Research } from './contracts.js';
+
 export function buildPerplexityPrompts(lang: string, titlePart: string) {
   const system =
     lang === 'ja'
@@ -51,3 +54,109 @@ Requirements:
 
   return { system, user };
 }
+
+export async function fetchResearch(
+  code: string,
+  options: { name?: string; lang?: string; refresh?: boolean },
+  deps: { apiKey: string; model?: string; fetch: any }
+): Promise<Research> {
+  const lang = options.lang || 'ja';
+  const cacheKey = `research:v2:${code}:${lang}`;
+  const throttleKey = `research:throttle:v2:${code}:${lang}`;
+
+  if (!options.refresh) {
+    const cached = globalCache.get<Research>(cacheKey);
+    if (cached) return cached;
+  } else {
+    const throttled = globalCache.get<boolean>(throttleKey);
+    if (throttled) {
+      const cached = globalCache.get<Research>(cacheKey);
+      if (cached) return cached;
+    }
+  }
+
+  const titlePart = options.name ? `${options.name} (${code})` : code;
+  const { system, user } = buildPerplexityPrompts(lang, titlePart);
+
+  const preferred = (deps.model || '').trim();
+  const candidates = [
+    preferred,
+    'sonar-pro',
+    'pplx-70b-online',
+    'pplx-7b-online',
+    'sonar-large-online'
+  ].filter(Boolean);
+
+  let content = '';
+  let lastError: string | null = null;
+
+  for (const model of candidates) {
+    const response = await deps.fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${deps.apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user }
+        ],
+        temperature: 0.2,
+        top_p: 0.9
+      })
+    });
+
+    let payload: any = null;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      const errorType = payload?.error?.type || '';
+      const errorMessage = payload?.error?.message || `HTTP ${response.status}`;
+      lastError = `${model}: ${errorType || 'error'}: ${errorMessage}`;
+      if (errorType === 'invalid_model') continue;
+      break;
+    }
+
+    content = payload?.choices?.[0]?.message?.content || '';
+    if (content) {
+      lastError = null;
+      break;
+    }
+
+    lastError = `${model}: empty content`;
+  }
+
+  if (!content) {
+    throw new Error(`Perplexity API failed (model resolution): ${lastError || 'unknown error'}`);
+  }
+
+  const lines = String(content).split(/\r?\n/);
+  const highlights: string[] = [];
+  const sources: { title?: string; url: string }[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (/^[-•・]/.test(trimmed)) highlights.push(trimmed.replace(/^[-•・]\s?/, ''));
+    const urls = trimmed.match(/https?:\/\/\S+/g);
+    if (urls) urls.forEach((url) => sources.push({ url }));
+  }
+
+  const research: Research = {
+    summary: content,
+    highlights,
+    sources,
+    updatedAt: new Date().toISOString()
+  };
+
+  globalCache.set(cacheKey, research, 3600 * 6); // 6 hours cache
+  globalCache.set(throttleKey, true, 300); // 5 minutes throttle
+  return research;
+}
+

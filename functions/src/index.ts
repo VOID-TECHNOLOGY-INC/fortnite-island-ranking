@@ -6,7 +6,8 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { buildCompareResponse, buildDashboardResponse, buildIslandOverviewResponse, buildSearchResponse } from './lib/dashboard.js';
 import { DASHBOARD_SORTS, TIME_WINDOWS, type DashboardSort, type DeltaValue, type HypeBreakdownComponent, type IslandSummary, type MetricKey, type MetricSnapshot, type TimeWindow } from './lib/contracts.js';
 import { fetchIslandSeries } from './lib/fortnite.js';
-import { buildPerplexityPrompts } from './lib/research.js';
+import { getApiCacheControl } from './lib/http.js';
+import { fetchResearch } from './lib/research.js';
 
 export const app = express();
 app.use(cors());
@@ -33,8 +34,8 @@ function isRecoverableUpstreamError(error: unknown): boolean {
   return /\b(400|404|422|429)\b/.test(message);
 }
 
-function setApiCacheHeaders(res: express.Response) {
-  res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
+function setApiCacheHeaders(res: express.Response, options?: { bypassCache?: boolean }) {
+  res.set('Cache-Control', getApiCacheControl(options));
 }
 
 const SUMMARY_METRICS: MetricKey[] = [
@@ -318,94 +319,21 @@ app.get(['/islands/:code/research', '/api/islands/:code/research'], async (req, 
   const { code } = req.params;
   const name = (req.query.name as string) || '';
   const lang = (req.query.lang as string) || 'ja';
-  const titlePart = name ? `${name} (${code})` : code;
-  const { system, user } = buildPerplexityPrompts(lang, titlePart);
+  const refresh = req.query.refresh === '1';
 
   try {
-    const preferred = (process.env.PERPLEXITY_MODEL || '').trim();
-    const candidates = [
-      preferred,
-      'sonar-pro',
-      'pplx-70b-online',
-      'pplx-7b-online',
-      'sonar-large-online',
-      'sonar-medium-online',
-      'sonar-small-online',
-      'pplx-70b',
-      'pplx-7b',
-      'sonar-large-chat',
-      'sonar-medium-chat',
-      'sonar-small-chat'
-    ].filter(Boolean);
-
-    let content = '';
-    let lastError: string | null = null;
-
-    for (const model of candidates) {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user }
-          ],
-          temperature: 0.2,
-          top_p: 0.9
-        })
-      });
-
-      let payload: any = null;
-      try {
-        payload = await response.json();
-      } catch {
-        payload = null;
+    const research = await fetchResearch(
+      code,
+      { name, lang, refresh },
+      {
+        apiKey,
+        model: process.env.PERPLEXITY_MODEL,
+        fetch
       }
+    );
 
-      if (!response.ok) {
-        const errorType = payload?.error?.type || '';
-        const errorMessage = payload?.error?.message || `HTTP ${response.status}`;
-        lastError = `${model}: ${errorType || 'error'}: ${errorMessage}`;
-        if (errorType === 'invalid_model') continue;
-        break;
-      }
-
-      content = payload?.choices?.[0]?.message?.content || '';
-      if (content) {
-        lastError = null;
-        break;
-      }
-
-      lastError = `${model}: empty content`;
-    }
-
-    if (!content) {
-      throw new Error(`Perplexity API failed (model resolution): ${lastError || 'unknown error'}`);
-    }
-
-    const lines = String(content).split(/\r?\n/);
-    const highlights: string[] = [];
-    const sources: { title?: string; url: string }[] = [];
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      if (/^[-•・]/.test(trimmed)) highlights.push(trimmed.replace(/^[-•・]\s?/, ''));
-      const urls = trimmed.match(/https?:\/\/\S+/g);
-      if (urls) urls.forEach((url) => sources.push({ url }));
-    }
-
-    setApiCacheHeaders(res);
-    res.json({
-      summary: content,
-      highlights,
-      sources,
-      updatedAt: new Date().toISOString()
-    });
+    setApiCacheHeaders(res, { bypassCache: refresh });
+    res.json(research);
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Failed to fetch research' });
   }

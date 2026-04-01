@@ -87,6 +87,18 @@ export type FacetValue = {
   count: number;
 };
 
+export type ResearchSource = {
+  title?: string;
+  url: string;
+};
+
+export type Research = {
+  summary: string;
+  highlights: string[];
+  sources: ResearchSource[];
+  updatedAt: string;
+};
+
 export type DashboardResponse = {
   window: TimeWindow;
   sort: DashboardSort;

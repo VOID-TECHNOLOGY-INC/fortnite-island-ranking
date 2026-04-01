@@ -75,10 +75,11 @@ export async function fetchCompare(codes: string[], window: TimeWindow): Promise
   });
 }
 
-export async function fetchIslandResearch(code: string, name?: string, lang?: string): Promise<Research> {
+export async function fetchIslandResearch(code: string, name?: string, lang?: string, refresh?: boolean): Promise<Research> {
   return fetchJson<Research>(`/api/islands/${code}/research`, {
     name,
-    lang
+    lang,
+    refresh: refresh ? '1' : undefined
   });
 }
 
