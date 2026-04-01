@@ -7,7 +7,7 @@
   "sort": { "hype": "HypeScore", "unique": "ユニーク", "peak": "同接ピーク", "d1": "翌日定着" },
   "kpi": { "hype": "HypeScore", "unique": "ユニーク", "peak": "同接ピーク", "mpp": "分/人", "d1": "D1", "d7": "D7" },
   "home": { "title": "Top Islands", "surge": "急上昇" },
-  "detail": { "metrics": "指標", "retention": "リテンション", "favorites": "お気に入り", "reコメンド": "推奨" },
+  "detail": { "metrics": "指標", "retention": "リテンション", "favorites": "お気に入り", "recommends": "推奨" },
   "search_placeholder": "Search"
 }
 

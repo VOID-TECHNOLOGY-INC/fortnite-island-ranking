@@ -55,3 +55,15 @@ test('detail can seed compare state and open compare directly', async ({ page })
   await expect(matrixTable.getByRole('columnheader', { name: 'Battle Box Alpha' })).toBeVisible();
   await expect(matrixTable.getByRole('columnheader', { name: 'Zombie Survival Arena' })).toBeVisible();
 });
+
+test('detail shows AI research with a regenerate button', async ({ page }) => {
+  await page.goto('/island/1234-5678-9012?name=Battle%20Box%20Alpha&window=10m');
+
+  await expect(page.getByRole('heading', { name: 'Reference notes' })).toBeVisible();
+  const regenBtn = page.getByRole('button', { name: 'Regenerate' });
+  await expect(regenBtn).toBeVisible();
+
+  await regenBtn.click();
+  await expect(page.getByRole('status')).toContainText('Research notes updated');
+  await expect(regenBtn).toBeEnabled();
+});

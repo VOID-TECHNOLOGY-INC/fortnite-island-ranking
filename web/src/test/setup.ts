@@ -27,6 +27,18 @@ Object.defineProperty(window, 'localStorage', {
   value: createMemoryStorage()
 });
 
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperty(window, 'ResizeObserver', {
+  configurable: true,
+  writable: true,
+  value: MockResizeObserver
+});
+
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
